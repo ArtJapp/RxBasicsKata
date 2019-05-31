@@ -15,13 +15,13 @@ class CountriesServiceSolved implements CountriesService {
     }
 
     public Single<Integer> countCountries(List<Country> countries) {
-        return Single.just(countries.size());
+        return Single.just(countries).map(List::size);
     }
 
     public Observable<Long> listPopulationOfEachCountry(List<Country> countries) {
         return Observable.fromArray(countries)
                 .flatMapIterable(countryList -> countryList)
-                .map(country -> country.getPopulation());
+                .map(Country::getPopulation);
     }
 
     @Override
@@ -35,7 +35,8 @@ class CountriesServiceSolved implements CountriesService {
     public Observable<Country> listOnly3rdAnd4thCountry(List<Country> countries) {
         return Observable.fromArray(countries)
                 .flatMapIterable(countryList -> countryList)
-                .filter(country -> countries.indexOf(country) == 3 || countries.indexOf(country) == 2);
+                .skip(2)
+                .take(2);
     }
 
     @Override
