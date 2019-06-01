@@ -2,6 +2,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.FutureTask;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -42,8 +43,7 @@ class CountriesServiceSolved implements CountriesService {
     @Override
     public Single<Boolean> isAllCountriesPopulationMoreThanOneMillion(List<Country> countries) {
         return Single.just(countries.stream()
-                .filter(x -> x.getPopulation() > 1000000)
-                .count() == countries.size());
+                .allMatch(x -> x.getPopulation() > 1000000));
     }
 
     @Override
@@ -55,7 +55,10 @@ class CountriesServiceSolved implements CountriesService {
 
     @Override
     public Observable<Country> listPopulationMoreThanOneMillionWithTimeoutFallbackToEmpty(final FutureTask<List<Country>> countriesFromNetwork) {
-        return null; // put your solution here
+        return Observable.fromFuture(countriesFromNetwork, 1, TimeUnit.SECONDS)
+                .flatMapIterable(countryList -> countryList)
+                .onErrorResumeNext(Observable.empty())
+                .filter(country -> country.getPopulation() > 1000000);
     }
 
     @Override
@@ -73,18 +76,21 @@ class CountriesServiceSolved implements CountriesService {
 
     @Override
     public Single<Map<String, Long>> mapCountriesToNamePopulation(List<Country> countries) {
-        return null; // put your solution here
+        return Observable.fromArray(countries).flatMapIterable(countries1 -> countries1).toMap(country -> country.getName(), country -> country.getPopulation());
     }
 
     @Override
     public Observable<Long> sumPopulationOfCountries(Observable<Country> countryObservable1,
                                                      Observable<Country> countryObservable2) {
-        return null; // put your solution here
+        return countryObservable1.concatWith(countryObservable2)
+                .map(Country::getPopulation)
+                .reduce((x,y) -> x+y)
+                .toObservable();
     }
 
     @Override
     public Single<Boolean> areEmittingSameSequences(Observable<Country> countryObservable1,
                                                     Observable<Country> countryObservable2) {
-        return null; // put your solution here
+        return Observable.sequenceEqual(countryObservable1, countryObservable2);
     }
 }
